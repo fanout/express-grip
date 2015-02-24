@@ -1,0 +1,33 @@
+{
+    "name": "express-grip",
+    "version": "0.0.1",
+    "author": "Fanout, Inc. <info@fanout.io>",
+    "description": "Express GRIP library",
+    "contributors": [
+        {
+            "name": "Konstantin Bokarius",
+            "email": "kon@fanout.io"
+        }
+    ],
+    "main": "./lib/express_grip",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/fanout/express-grip.git"
+    },
+    "readmeFilename": "README.md",
+    "keywords": [
+        "grip",
+        "fanout",
+        "fanoutpub",
+        "realtime",
+        "push",
+        "pubcontrol",
+        "publish",
+        "express"
+    ],
+    "dependencies": {
+        "grip": "1.x",
+        "jwt-simple": "0.x"
+    },
+    "license": "MIT"
+}
