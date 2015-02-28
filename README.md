@@ -13,6 +13,8 @@ express-grip is offered under the MIT license. See the LICENSE file.
 Installation
 ------------
 
+This library is compatible with both Express 3 and 4.
+
 ```sh
 npm install express-grip
 ```
@@ -85,7 +87,7 @@ var myConfigObject = {
 };
 ```
 
-Example route:
+Express 4 example route:
 
 ```javascript
 var express = require('express');
@@ -136,7 +138,7 @@ router.use(expressGrip.postHandlerGripMiddleware);
 module.exports = router;
 ```
 
-Stateless WebSocket echo service with broadcast endpoint:
+Express 4 stateless WebSocket echo service example with broadcast endpoint:
 
 ```javascript
 var express = require('express');
