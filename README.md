@@ -88,26 +88,52 @@ var myConfigObject = {
 Example route:
 
 ```javascript
-class GripController < ApplicationController
-  def get
-    # if the request didn't come through a GRIP proxy, throw 501
-    if !RailsGrip.is_grip_proxied(request)
-      render :text => "Not implemented\n", :status => 501
-      return
-    end
+var express = require('express');
+var router = express.Router();
+var grip = require('grip');
+var expressGrip = require('express-grip');
 
-    # subscribe every incoming request to a channel in stream mode
-    RailsGrip.set_hold_stream(request, '<channel>')
-    render :text => '[stream open]'
-  end
+// Add the pre-handler middleware to the front of the stack
+router.use(expressGrip.preHandlerGripMiddleware);
 
-  def post
-    # publish data to subscribers
-    data = request.body.read
-    RailsGrip.publish('<channel>', HttpStreamFormat.new(data + "\n"))
-    render :text => "Ok\n"
-  end
-end
+router.get('/', function(req, res, next) {
+    try {
+        // If the request didn't come through a GRIP proxy, throw 501
+        if (!res.locals.gripProxied) {
+            res.sendStatus(501);
+            return;
+        }
+     
+        // Subscribe every incoming request to a channel in stream mode
+        expressGrip.setHoldStream(res, '<channel>');
+        res.send("[stream open]\n");
+
+        // Alternatively subscribe and long-poll
+        //expressGrip.setHoldLongpoll(res, '<channel>', <timeout>);
+        //res.end();
+    } finally {
+        // next() must be called here for the post-handler middleware to execute
+        next();
+    }
+});
+
+router.post('/', function(req, res, next) {
+    data = req.body;
+
+    // Publish stream data to subscribers
+    expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + "\n"));
+
+    // Alternatively publish response data to long-poll clients
+    //expressGrip.publish('<channel>', new grip.HttpResponseFormat(null, null, null, data));
+
+    res.send("Ok\n");
+    next();
+});
+
+// Add the post-handler middleware to the back of the stack
+router.use(expressGrip.postHandlerGripMiddleware);
+
+module.exports = router;
 ```
 
 Stateless WebSocket echo service with broadcast endpoint:
