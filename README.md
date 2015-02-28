@@ -20,7 +20,7 @@ npm install express-grip
 Usage
 -----
 
-This library comes with two middleware classes which you must use. Express-grip performs its magic and provides conveniences through the use of both pre-route and post-route middleware. Therefore, it's necessary to call next() at the end of your route handler to ensure that the post-route middleware executes. The middleware will parse the Grip-Sig header in any requests to detect if they came from a GRIP proxy, and it will apply any hold instructions when responding. Additionally, the middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP proxy can be controlled via HTTP responses from the Express application.
+This library comes with two middleware classes which you must use. Express-grip performs its magic and provides conveniences through the use of both pre-route and post-route middleware. _Therefore, even if a particular route does not use express-grip features, it's necessary to call next() at the end of your route handler to ensure that the post-route middleware executes_. The middleware will parse the Grip-Sig header in any requests to detect if they came from a GRIP proxy, and it will apply any hold instructions when responding. Additionally, the middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP proxy can be controlled via HTTP responses from the Express application.
 
 Configure express-grip by providing a configuration object of your choice to the configure() method. The various express-grip settings are shown below. Note that your configuration object should provide access to the express-grip settings via dot notation. Call the configure() method in your app.js file like so:
 
@@ -32,7 +32,7 @@ var myConfigObject = { ... };
 expressGrip.configure(myConfigObject);
 ```
 
-Set grip_proxies in your application configuration:
+Set gripProxies for GRIP proxy validation and publishing:
 
 ```javascript
 // Pushpin and/or Fanout.io is used for sending realtime data to clients
@@ -62,7 +62,7 @@ var myConfigObject = {
 };
 ```
 
-To prepend a fixed string to all channels used for publishing and subscribing, set grip_prefix in your configuration:
+To prepend a fixed string to all channels used for publishing and subscribing, set gripPrefix in your configuration:
 
 ```javascript
 var myConfigObject = {
@@ -71,7 +71,7 @@ var myConfigObject = {
 };
 ```
 
-You can also set any other EPCP servers that aren't necessarily proxies with publish_servers:
+You can also set any other EPCP servers that aren't necessarily proxies with publishServers:
 
 ```javascript
 var myConfigObject = {
@@ -112,7 +112,7 @@ router.get('/', function(req, res, next) {
         //expressGrip.setHoldLongpoll(res, '<channel>', <timeout>);
         //res.end();
     } finally {
-        // next() must be called here for the post-handler middleware to execute
+        // next() must be called for the post-handler middleware to execute
         next();
     }
 });
@@ -166,7 +166,6 @@ router.post('/websocket', function(req, res, next) {
         // If return value is undefined then connection is closed
         if (message === undefined) {
             ws.close();
-            console.log(ws.closeCode);
             break;
         }
 
@@ -174,7 +173,7 @@ router.post('/websocket', function(req, res, next) {
         ws.send(message);
     }
 
-    // next() must be called here for the post-handler middleware to execute
+    // next() must be called for the post-handler middleware to execute
     next();
 });
 
@@ -184,7 +183,7 @@ router.post('/broadcast', function(req, res, next) {
     expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
     res.send("Ok\n");
 
-    // next() must be called here for the post-handler middleware to execute
+    // next() must be called for the post-handler middleware to execute
     next();
 });
 
