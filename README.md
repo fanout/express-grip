@@ -77,7 +77,7 @@ You can also set any other EPCP servers that aren't necessarily proxies with pub
 
 ```javascript
 var myConfigObject = {
-    publishServers = [
+    gripPubServers = [
         {
             'uri' => 'http://example.com/base-uri',
             'iss' => 'your-iss', 
