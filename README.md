@@ -14,68 +14,78 @@ Installation
 ------------
 
 ```sh
-```
-
-```javascript
+npm install express-grip
 ```
 
 Usage
 -----
 
+This library comes with two middleware classes which you must use. Express-grip performs its magic and provides conveniences through the use of both pre-route and post-route middleware. Therefore, it's necessary to call next() at the end of your route handler to ensure that the post-route middleware executes. The middleware will parse the Grip-Sig header in any requests to detect if they came from a GRIP proxy, and it will apply any hold instructions when responding. Additionally, the middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP proxy can be controlled via HTTP responses from the Express application.
+
+Configure express-grip by providing a configuration object of your choice to the configure() method. The various express-grip settings are shown below. Note that your configuration object should provide access to the express-grip settings via dot notation. Call the configure() method in your app.js file like so:
+
+```javascript
+var expressGrip = require('express-grip');
+
+var myConfigObject = { ... };
+
+expressGrip.configure(myConfigObject);
+```
+
 Set grip_proxies in your application configuration:
 
-```
-# pushpin and/or fanout.io is used for sending realtime data to clients
-config.grip_proxies = [
-    # pushpin
-    {
-        'control_uri' => 'http://localhost:5561',
-        'key' => 'changeme'
-    }
-    # fanout.io
-    #{
-    #    'control_uri' => 'https://api.fanout.io/realm/your-realm',
-    #    'control_iss' => 'your-realm',
-    #    'key' => Base64.decode64('your-realm-key')
-    #}
-]
+```javascript
+// Pushpin and/or Fanout.io is used for sending realtime data to clients
+var myConfigObject = {
+    gripProxies = [
+        // Pushpin
+        {
+            'control_uri' => 'http://localhost:5561',
+            'key' => 'changeme'
+        },
+        // Fanout.io
+        {
+            'control_uri' => 'https://api.fanout.io/realm/your-realm',
+            'control_iss' => 'your-realm',
+            'key' => Base64.decode64('your-realm-key')
+        }],
+    ...
+};
 ```
 
-If it's possible for clients to access the Rails app directly, without necessarily going through the GRIP proxy, then you may want to avoid sending GRIP instructions to those clients. An easy way to achieve this is with the grip_proxy_required setting. If set, then any direct requests that trigger a GRIP instruction response will be given a 501 Not Implemented error instead.
+If it's possible for clients to access the Express app directly, without necessarily going through the GRIP proxy, then you may want to avoid sending GRIP instructions to those clients. An easy way to achieve this is with the gripProxyRequired setting. If set, then any direct requests that trigger a GRIP instruction response will be given a 501 Not Implemented error instead.
 
-```
-config.grip_proxy_required = true
+```javascript
+var myConfigObject = {
+    gripIsProxyRequired: true,
+    ...
+};
 ```
 
 To prepend a fixed string to all channels used for publishing and subscribing, set grip_prefix in your configuration:
 
-```
-grip_prefix = '<prefix>'
+```javascript
+var myConfigObject = {
+    gripPrefix = '<prefix>',
+    ...
+};
 ```
 
 You can also set any other EPCP servers that aren't necessarily proxies with publish_servers:
 
-```
-config.publish_servers = [
-    {
-        'uri' => 'http://example.com/base-uri',
-        'iss' => 'your-iss', 
-        'key' => 'your-key'
-    }
-]
-```
-
-This library also comes with a Rack middleware class and a Railstie implementation that will automatically add the middleware to the application when express-grip is added to the application's Gemfile. The middleware will parse the Grip-Sig header in any requests in order to detect if they came from a GRIP proxy, and it will apply any hold instructions when responding. Additionally, the middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP proxy can be controlled via HTTP responses from the Rails application.
-
-The middleware should be placed as early as possible in the proessing order, so that it can collect all response headers and provide them in a hold instruction if necessary.
-
-Note that in Rails 4 the following should be set for API endpoints in the ApplicationController to avoid CSRF authenticity exceptions:
-
 ```javascript
-protect_from_forgery except: :<api_endpoint>
+var myConfigObject = {
+    publishServers = [
+        {
+            'uri' => 'http://example.com/base-uri',
+            'iss' => 'your-iss', 
+            'key' => 'your-key'
+        }],
+    ...
+};
 ```
 
-Example controller:
+Example route:
 
 ```javascript
 class GripController < ApplicationController
@@ -103,44 +113,57 @@ end
 Stateless WebSocket echo service with broadcast endpoint:
 
 ```javascript
-class WebSocketOverHttpGripController < ApplicationController
-  def echo
-    render nothing: true
+var express = require('express');
+var router = express.Router();
+var grip = require('grip');
+var expressGrip = require('express-grip');
 
-    # reject non-websocket requests
-    RailsGrip.verify_is_websocket(request)
+// Add the pre-handler middleware to the front of the stack
+router.use(expressGrip.preHandlerGripMiddleware);
 
-    # if this is a new connection, accept it and subscribe it to a channel
-    if ws.is_opening
-      ws.accept
-      ws.subscribe('test_channel')
-    end
+router.post('/websocket', function(req, res, next) {
+    // Reject non-WebSocket requests
+    if (!expressGrip.verifyIsWebSocket(res, next)) {
+        return;
+    }
 
-    while ws.can_recv do
-      message = ws.recv
+    // If this is a new connection, accept it and subscribe it to a channel
+    ws = expressGrip.getWsContext(res);
+    if (ws.isOpening()) {
+        ws.accept();
+        ws.subscribe('<channel>');
+    }
 
-      # if return value is nil, then the connection is closed
-      if message.nil?
-        ws.close
-        break
-      end
+    while (ws.canRecv()) {
+        message = ws.recv();
 
-      # echo the message
-      ws.send(message)
-    end
-  end
+        // If return value is undefined then connection is closed
+        if (message === undefined) {
+            ws.close();
+            console.log(ws.closeCode);
+            break;
+        }
 
-  def broadcast
-    if request.method == 'POST'
+        // Echo the message
+        ws.send(message);
+    }
 
-      # publish data to all clients that are connected to the echo endpoint
-      data = request.body.read
-      RailsGrip.publish('<channel>', WebSocketMessageFormat.new(data))
+    // next() must be called here for the post-handler middleware to execute
+    next();
+});
 
-      render :text => "Ok\n"
-    else
-      render :text => "Method not allowed\n", :status => 405
-    end
-  end
-end
+router.post('/broadcast', function(req, res, next) {
+    // Publish data to all clients that are connected to the echo endpoint
+    data = req.body;
+    expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
+    res.send("Ok\n");
+
+    // next() must be called here for the post-handler middleware to execute
+    next();
+});
+
+// Add the post-handler middleware to the back of the stack
+router.use(expressGrip.postHandlerGripMiddleware);
+
+module.exports = router;
 ```

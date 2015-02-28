@@ -27,7 +27,8 @@
     ],
     "dependencies": {
         "grip": "1.x",
-        "jwt-simple": "0.x"
+        "jwt-simple": "0.x",
+        "jspack": "0.x"
     },
     "license": "MIT"
 }
