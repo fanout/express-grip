@@ -42,14 +42,14 @@ var myConfigObject = {
     gripProxies = [
         // Pushpin
         {
-            'control_uri' => 'http://localhost:5561',
-            'key' => 'changeme'
+            'control_uri': 'http://localhost:5561',
+            'key': 'changeme'
         },
         // Fanout.io
         {
-            'control_uri' => 'https://api.fanout.io/realm/your-realm',
-            'control_iss' => 'your-realm',
-            'key' => Base64.decode64('your-realm-key')
+            'control_uri': 'https://api.fanout.io/realm/your-realm',
+            'control_iss': 'your-realm',
+            'key': Base64.decode64('your-realm-key')
         }],
     ...
 };
@@ -59,7 +59,7 @@ If it's possible for clients to access the Express app directly, without necessa
 
 ```javascript
 var myConfigObject = {
-    gripIsProxyRequired: true,
+    gripProxyRequired: true,
     ...
 };
 ```
@@ -79,9 +79,9 @@ You can also set any other EPCP servers that aren't necessarily proxies with pub
 var myConfigObject = {
     gripPubServers = [
         {
-            'uri' => 'http://example.com/base-uri',
-            'iss' => 'your-iss', 
-            'key' => 'your-key'
+            'uri': 'http://example.com/base-uri',
+            'iss': 'your-iss', 
+            'key': 'your-key'
         }],
     ...
 };
@@ -166,7 +166,7 @@ router.post('/websocket', function(req, res, next) {
         message = ws.recv();
 
         // If return value is undefined then connection is closed
-        if (message === undefined) {
+        if (message == null) {
             ws.close();
             break;
         }
