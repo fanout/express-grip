@@ -1,6 +1,6 @@
 {
     "name": "express-grip",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "author": "Fanout, Inc. <info@fanout.io>",
     "description": "Express GRIP library",
     "contributors": [
@@ -26,7 +26,7 @@
         "express"
     ],
     "dependencies": {
-        "grip": "1.x",
+        "grip": ">=1.2.2 <2.0.0",
         "jwt-simple": "0.x",
         "jspack": "0.x"
     },
