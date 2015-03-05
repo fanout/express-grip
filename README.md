@@ -126,7 +126,8 @@ router.post('/', function(req, res, next) {
     expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + "\n"));
 
     // Alternatively publish response data to long-poll clients
-    //expressGrip.publish('<channel>', new grip.HttpResponseFormat(null, null, null, data));
+    //expressGrip.publish('<channel>',
+    //        new grip.HttpResponseFormat(null, null, null, data));
 
     res.send("Ok\n");
     next();
