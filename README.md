@@ -151,7 +151,7 @@ var expressGrip = require('express-grip');
 // Add the pre-handler middleware to the front of the stack
 router.use(expressGrip.preHandlerGripMiddleware);
 
-router.post('/websocket', function(req, res, next) {
+router.all('/websocket', function(req, res, next) {
     // Reject non-WebSocket requests
     if (!expressGrip.verifyIsWebSocket(res, next)) {
         return;
