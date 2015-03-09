@@ -27,7 +27,7 @@
     ],
     "dependencies": {
 	"pubcontrol": "1.x",
-        "grip": ">=1.2.3 <2.0.0",
+        "grip": ">=1.2.4 <2.0.0",
         "jwt-simple": "0.x",
         "jspack": "0.x"
     },
