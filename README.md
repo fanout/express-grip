@@ -164,6 +164,9 @@ router.post('/websocket', function(req, res, next) {
     }
 
     while (ws.canRecv()) {
+        // Note that recv() will always return a String while recvRaw() can be
+        // used to get either a String or Buffer depending on whether the
+        // message is TEXT or BINARY respectively
         message = ws.recv();
 
         // If return value is undefined then connection is closed
