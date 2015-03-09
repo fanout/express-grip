@@ -144,6 +144,7 @@ Express 4 stateless WebSocket echo service example with broadcast endpoint:
 ```javascript
 var express = require('express');
 var router = express.Router();
+var bodyParser = require('body-parser');
 var grip = require('grip');
 var expressGrip = require('express-grip');
 
@@ -183,7 +184,9 @@ router.post('/websocket', function(req, res, next) {
     next();
 });
 
-router.post('/broadcast', function(req, res, next) {
+router.post('/broadcast',
+        bodyParser.text({ type: '*/*' }),
+        function(req, res, next) {
     // Publish data to all clients that are connected to the echo endpoint
     data = req.body;
     expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
