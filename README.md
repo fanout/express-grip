@@ -108,7 +108,7 @@ router.get('/', function(req, res, next) {
      
         // Subscribe every incoming request to a channel in stream mode
         expressGrip.setHoldStream(res, '<channel>');
-        res.send("[stream open]\n");
+        res.send('[stream open]\n');
 
         // Alternatively subscribe and long-poll
         //expressGrip.setHoldLongpoll(res, '<channel>', <timeout>);
@@ -123,13 +123,13 @@ router.post('/', function(req, res, next) {
     data = req.body;
 
     // Publish stream data to subscribers
-    expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + "\n"));
+    expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + '\n'));
 
     // Alternatively publish response data to long-poll clients
     //expressGrip.publish('<channel>',
     //        new grip.HttpResponseFormat(null, null, null, data));
 
-    res.send("Ok\n");
+    res.send('Ok\n');
     next();
 });
 
@@ -190,7 +190,7 @@ router.post('/broadcast',
     // Publish data to all clients that are connected to the echo endpoint
     data = req.body;
     expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
-    res.send("Ok\n");
+    res.send('Ok\n');
 
     // next() must be called for the post-handler middleware to execute
     next();
