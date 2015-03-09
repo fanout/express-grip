@@ -120,7 +120,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    data = req.body;
+    var data = req.body;
 
     // Publish stream data to subscribers
     expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + '\n'));
@@ -168,7 +168,7 @@ router.all('/websocket', function(req, res, next) {
         // Note that recv() will always return a String while recvRaw() can be
         // used to get either a String or Buffer depending on whether the
         // message is TEXT or BINARY respectively
-        message = ws.recv();
+        var message = ws.recv();
 
         // If return value is undefined then connection is closed
         if (message == null) {
@@ -188,7 +188,7 @@ router.post('/broadcast',
         bodyParser.text({ type: '*/*' }),
         function(req, res, next) {
     // Publish data to all clients that are connected to the echo endpoint
-    data = req.body;
+    var data = req.body;
     expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
     res.send('Ok\n');
 
