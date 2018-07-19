@@ -1,35 +1,34 @@
 {
-    "name": "express-grip",
-    "version": "1.1.0",
-    "author": "Fanout, Inc. <info@fanout.io>",
-    "description": "Express GRIP library",
-    "contributors": [
-        {
-            "name": "Konstantin Bokarius",
-            "email": "kon@fanout.io"
-        }
-    ],
-    "main": "./lib/express_grip",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/fanout/express-grip.git"
-    },
-    "readmeFilename": "README.md",
-    "keywords": [
-        "grip",
-        "fanout",
-        "fanoutpub",
-        "realtime",
-        "push",
-        "pubcontrol",
-        "publish",
-        "express"
-    ],
-    "dependencies": {
-	"pubcontrol": "1.x",
-        "grip": ">=1.2.4 <2.0.0",
-        "jwt-simple": "0.x",
-        "jspack": "0.x"
-    },
-    "license": "MIT"
+  "name": "express-grip",
+  "version": "1.1.0",
+  "author": "Fanout, Inc. <info@fanout.io>",
+  "description": "Express GRIP library",
+  "contributors": [
+    {
+      "name": "Konstantin Bokarius",
+      "email": "kon@fanout.io"
+    }
+  ],
+  "main": "./lib/express_grip",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fanout/express-grip.git"
+  },
+  "readmeFilename": "README.md",
+  "keywords": [
+    "grip",
+    "fanout",
+    "fanoutpub",
+    "realtime",
+    "push",
+    "pubcontrol",
+    "publish",
+    "express"
+  ],
+  "dependencies": {
+    "grip": "^1.3.0",
+    "jspack": "0.0.4",
+    "pubcontrol": "^1.2.0"
+  },
+  "license": "MIT"
 }
