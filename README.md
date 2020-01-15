@@ -9,12 +9,12 @@ An Express GRIP library.
 This library is compatible with Express 4.x, and may work with Express 3.x as well.
 
 ```sh
-npm install @fanout/express-grip
+npm install @fanoutio/express-grip
 ```
 
 ## Usage
 
-### Adding the Middleware
+### Architecture
 
 This library provides two middleware classes.
 
@@ -23,15 +23,18 @@ both pre-route and post-route middleware. Therefore, in order to use this librar
 must `use` both of them.
 
 ```javascript
-import { preGrip, postGrip } from '@fanout/express-grip';
+import buildExpressGrip from '@fanoutio/express-grip';
+const expressGrip = buildExpressGrip({
+    /* config */
+});
 
 // Add the pre-handler middleware to the front of the stack
-router.use( preGrip );
+router.use( expressGrip.preGrip );
 
 // .. routes
 
 // Add the post-handler middleware to the back of the stack
-router.use( postGrip );
+router.use( expressGrip.postGrip );
 ```
 
 Therefore, _even if a particular route does not use `express-grip` features, it's necessary
@@ -45,12 +48,12 @@ proxy can be controlled via HTTP responses from the Express application.
 
 ### Configuration
 
-Configure express-grip with the configure() method.
+Configure express-grip by passing options to the buildExpressGrip function.
 
 ```javascript
-import expressGrip from '@fanoutio/express-grip';
+import buildExpressGrip from '@fanoutio/express-grip';
 
-expressGrip.configure({
+const expressGrip = buildExpressGrip({
     /* ... */
 });
 ```
@@ -59,7 +62,7 @@ Set `gripProxies` for GRIP proxy validation and publishing:
 
 ```javascript
 // Pushpin and/or Fanout.io is used for sending realtime data to clients
-expressGrip.configure({
+const expressGrip = buildExpressGrip({
     gripProxies: [
         // Pushpin
         {
@@ -73,7 +76,6 @@ expressGrip.configure({
             'key': Base64.decode64('your-realm-key'),
         },
     ],
-    /* ... */
 });
 ```
 
@@ -84,9 +86,8 @@ If set, then any direct requests that trigger a GRIP instruction response will b
 given a 501 Not Implemented error instead.
 
 ```javascript
-expressGrip.configure({
+const expressGrip = buildExpressGrip({
     gripProxyRequired: true,
-    /* ... */
 });
 ```
 
@@ -94,9 +95,8 @@ To prepend a fixed string to all channels used for publishing and subscribing, s
 `gripPrefix` in your configuration:
 
 ```javascript
-expressGrip.configure({
+const expressGrip = buildExpressGrip({
     gripPrefix: '<prefix>',
-    /* ... */
 });
 ```
 
@@ -104,7 +104,7 @@ You can also set any other EPCP servers that aren't necessarily proxies with
 `publishServers`:
 
 ```javascript
-expressGrip.configure({
+const expressGrip = buildExpressGrip({
     gripPubServers: [
         {
             'uri': 'http://example.com/base-uri',
@@ -112,131 +112,114 @@ expressGrip.configure({
             'key': 'your-key'
         },
     ],
-    ...
 });
 ```
 
-## Examples
-
-Express 4 example route:
+## Sample Usage
 
 ```javascript
 import express from 'express';
-import grip from '@fanoutio/grip';
-import expressGrip from '@fanoutio/express-grip';
+import { HttpStreamFormat } from '@fanoutio/grip';
+import buildExpressGrip, { setHoldStream, } from '@fanoutio/express-grip';
 
-const router = express.Router();
+const app = express();
+
+// GRIP will publish to local Pushpin
+const expressGrip = buildExpressGrip({
+    gripProxies: [{
+        control_uri: "http://localhost:5561/",
+    }],
+});
 
 // Add the pre-handler middleware to the front of the stack
-router.use(expressGrip.preGrip);
+app.use(expressGrip.preGrip);
 
-router.get('/', function(req, res, next) {
+app.get('/', function(req, res, next) {
     try {
-        // If the request didn't come through a GRIP proxy, throw 501
-        if (!res.locals.gripProxied) {
-            res.sendStatus(501);
-            return;
-        }
-     
         // Subscribe every incoming request to a channel in stream mode
-        expressGrip.setHoldStream(res, '<channel>');
+        // 'test' is the channel name
+        setHoldStream(res, 'test');
         res.send('[stream open]\n');
-
-        // Alternatively subscribe and long-poll
-        //expressGrip.setHoldLongpoll(res, '<channel>', <timeout>);
-        //res.end();
     } finally {
         // next() must be called for the post-handler middleware to execute
         next();
     }
 });
 
-router.post('/', function(req, res, next) {
+app.post('/', function(req, res, next) {
     const data = req.body;
 
     // Publish stream data to subscribers
-    expressGrip.publish('<channel>', new grip.HttpStreamFormat(data + '\n'));
-
-    // Alternatively publish response data to long-poll clients
-    //expressGrip.publish('<channel>',
-    //        new grip.HttpResponseFormat(null, null, null, data));
-
+    // 'test' is the channel name
+    expressGrip.publish('test', new HttpStreamFormat(data + '\n'));
     res.send('Ok\n');
     next();
 });
 
 // Add the post-handler middleware to the back of the stack
-router.use(expressGrip.postGrip);
-
-module.exports = router;
+app.use(expressGrip.postGrip);
 ```
 
-Express 4 stateless WebSocket echo service example with broadcast endpoint:
+## Consuming this library
+
+### ESM
+
+If you are using Node 12.0 or newer or building a bundle for a browser using a
+modern bundler, you can use this package as an ESM module.  Install it as an
+npm package:
+
+```bash
+npm install @fanoutio/grip
+```
+
+Import in your JavaScript:
 
 ```javascript
-import express from 'express';
-import bodyParser from 'body-parser';
-import grip from '@fanoutio/grip';
-import expressGrip from '@fanoutio/express-grip';
-
-const router = express.Router();
-
-// Add the pre-handler middleware to the front of the stack
-router.use(expressGrip.preHandlerGripMiddleware);
-
-router.all('/websocket', function(req, res, next) {
-    // Reject non-WebSocket requests
-    if (!expressGrip.verifyIsWebSocket(res, next)) {
-        return;
-    }
-
-    // If this is a new connection, accept it and subscribe it to a channel
-    const ws = expressGrip.getWsContext(res);
-    if (ws.isOpening()) {
-        ws.accept();
-        ws.subscribe('<channel>');
-    }
-
-    while (ws.canRecv()) {
-        // Note that recv() will always return a String while recvRaw() can be
-        // used to get either a String or Buffer depending on whether the
-        // message is TEXT or BINARY respectively
-        const message = ws.recv();
-
-        // If return value is undefined then connection is closed
-        if (message == null) {
-            ws.close();
-            break;
-        }
-
-        // Echo the message
-        ws.send(message);
-    }
-
-    // next() must be called for the post-handler middleware to execute
-    next();
-});
-
-router.post(
-    '/broadcast',
-    bodyParser.text({ type: '*/*' }),
-    (req, res, next) => {
-        const { body: data, } = req;
-
-        // Publish data to all clients that are connected to the echo endpoint
-        expressGrip.publish('<channel>', new grip.WebSocketMessageFormat(data));
-        res.send('Ok\n');
-    
-        // next() must be called for the post-handler middleware to execute
-        next();
-    }
-);
-
-// Add the post-handler middleware to the back of the stack
-router.use(expressGrip.postHandlerGripMiddleware);
-
-module.exports = router;
+import buildExpressGrip, { setHoldStream } from '@fanoutio/grip';
+const expressGrip = buildExpressGrip({ /* config */ });
 ```
+
+### CommonJS
+
+This package is a hybrid package, and a CommonJS version of the library is
+available by specifying a deep path.  You will also need to install the dependency
+`@babel/runtime-corejs3` directly:
+
+```bash
+npm install @fanoutio/grip @babel/runtime-corejs3
+```
+
+Require in your JavaScript:
+
+```javascript
+const buildExpressGrip = require('@fanoutio/grip/commonjs');
+const { setHoldStream } = buildExpressGrip;
+
+const expressGrip = buildExpressGrip({ /* config */ });
+```
+
+## Demos
+
+### HTTP Demo
+
+Express 4 Grip Hold Stream example
+
+pushpin
+node demo/http/server.mjs test
+curl -i http://localhost:7999/
+curl -i -X POST -d 'foo' http://localhost:7999/
+
+### Websocket Demo
+
+Express 4 stateless WebSocket echo service example with broadcast endpoint
+
+wscat
+pushpin
+node demo/ws/server test
+wscat --connect ws://localhost:7999/websocket
+curl -i -X POST -d 'foo' http://localhost:7999/broadcast
+
+### Migrating from 1.x 
 
 ## License
 
