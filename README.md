@@ -223,4 +223,5 @@ curl -i -X POST -d 'foo' http://localhost:7999/broadcast
 
 ## License
 
-`express-grip` is offered under the MIT license. See the LICENSE file.
+(C) 2015, 2020 Fanout, Inc.  
+Licensed under the MIT License, see file LICENSE for details.
