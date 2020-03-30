@@ -8,33 +8,43 @@
  * Licensed under the MIT License, see file COPYING for details.
  */
 
-import jspackModule from 'jspack';
-const { jspack } = jspackModule;
+import { jspack } from 'jspack';
+/// <reference path="./types/jspack.d.ts" />
 
-import { Item } from '@fanoutio/pubcontrol';
+import PubControl, { IFormat, IPubControlConfig } from '@fanoutio/pubcontrol';
+const { Item } = PubControl;
+
 import {
-    GripPubControl,
     Channel,
-    Response,
-    WebSocketEvent,
-    WebSocketContext,
-    createHold,
-    validateSig,
-    encodeWebSocketEvents,
-    decodeWebSocketEvents,
     createGripChannelHeader,
+    createHold,
+    decodeWebSocketEvents,
+    encodeWebSocketEvents,
+    GripPubControl,
+    IGripConfig,
+    Response,
+    validateSig,
+    WebSocketContext,
+    WebSocketEvent,
 } from '@fanoutio/grip';
+
+import IExpressGripConfig from "./IExpressGripConfig";
+import IGripExpressResponse from "./IGripExpressResponse";
+import IGripExpressRequest from "./IGripExpressRequest";
 
 const CONTENT_TYPE_APP_WS_EVENTS = 'application/websocket-events';
 
 export default class ExpressGrip {
-    gripProxies = null;
-    pubServers = null;
-    prefix = '';
-    isGripProxyRequired = false;
-    _pubControl = null;
+    gripProxies?: IGripConfig[];
+    pubServers?: IPubControlConfig[];
+    prefix: string = '';
+    isGripProxyRequired: boolean = false;
 
-    constructor(config) {
+    _pubControl?: GripPubControl;
+    preGrip: Function;
+    postGrip: Function;
+
+    constructor(config?: IExpressGripConfig) {
 
         this.applyConfig(config);
 
@@ -43,13 +53,13 @@ export default class ExpressGrip {
 
     }
 
-    applyConfig(config = {}) {
+    applyConfig(config: IExpressGripConfig = {}) {
 
         const { gripProxies, gripPubServers, gripProxyRequired, gripPrefix } = config;
 
         this.gripProxies = gripProxies;
         this.pubServers = gripPubServers;
-        this.isGripProxyRequired = gripProxyRequired;
+        this.isGripProxyRequired = gripProxyRequired ?? false;
         this.prefix = gripPrefix ?? '';
 
     }
@@ -67,7 +77,7 @@ export default class ExpressGrip {
         return this._pubControl;
     }
 
-    async publish(channel, formats, id, prevId) {
+    async publish(channel: string, formats: IFormat | IFormat[], id?: string, prevId?: string) {
         const pubControl = this.getPubControl();
         await pubControl.publish(
             this.prefix + channel,
@@ -77,9 +87,10 @@ export default class ExpressGrip {
 
     // Middleware
 
-    _preGrip(req, res, next) {
+    _preGrip(req: IGripExpressRequest, res: IGripExpressResponse, next: Function) {
         res.gripOriginalEnd = res.end.bind(res);
-        res.end = function(chunk, encoding) {
+        // @ts-ignore
+        res.end = function(chunk: any, encoding?: string) {
             this.locals.gripEndParams = [ chunk, encoding ];
         };
         res.locals.gripProxied = false;
@@ -128,19 +139,19 @@ export default class ExpressGrip {
                 )
             )
         ) {
-            const cid = req.get('connection-id');
+            const cid = req.get('connection-id') as string;
             const meta = Object
                 .entries(req.headers)
                 .reduce((acc, [key, value]) => {
                     const lKey = key.toLowerCase();
                     if (lKey.startsWith('meta-')) {
-                        acc[lkey.substring(5)] = value;
+                        acc[lKey.substring(5)] = value;
                     }
                     return acc;
                 }, {});
 
             req._body = true;
-            let bodySegments = [];
+            let bodySegments: any[] = [];
             req.on('data', (chunk) => {
                 bodySegments.push(chunk);
             });
@@ -164,7 +175,7 @@ export default class ExpressGrip {
         }
     }
 
-    _postGrip(req, res, next) {
+    _postGrip(_req: IGripExpressRequest, res: IGripExpressResponse) {
         if (res.statusCode === 200 && res.locals.gripWsContext != null) {
 
             const wsContext = res.locals.gripWsContext;
@@ -198,7 +209,9 @@ export default class ExpressGrip {
             }
             if (wsContext.closed) {
                 const octets = jspack.Pack('>H', [wsContext.outCloseCode]);
-                events.push(new WebSocketEvent('CLOSE', new Buffer(octets)));
+                if (octets !== false) {
+                    events.push(new WebSocketEvent('CLOSE', new Buffer(octets)));
+                }
             }
             res.send(encodeWebSocketEvents(events));
             res.charset = '';
@@ -210,7 +223,7 @@ export default class ExpressGrip {
                 res.set('Set-Meta-' + k, '');
             }
             for (const [k, v] of Object.entries(metaSet)) {
-                res.set('Set-Meta-' + k, v);
+                res.set('Set-Meta-' + k, String(v));
             }
         } else if (res.locals.gripHold != null) {
             if (!res.locals.gripProxied && this.isGripProxyRequired) {
@@ -219,7 +232,9 @@ export default class ExpressGrip {
                 return;
             }
 
-            const channels = res.locals.gripChannels.map(channel => {
+            // res.locals.gripChannels should not be undefined at this point because
+            // gripHold and it are set together.
+            const channels = (res.locals.gripChannels as Channel[]).map(channel => {
                 const { prefix = '' } = this;
                 return new Channel( prefix + channel.name, channel.prevId );
             });
@@ -235,7 +250,7 @@ export default class ExpressGrip {
                     res.locals.gripHold,
                     channels,
                     iresponse,
-                    timeout
+                    timeout != null ? timeout : undefined
                 );
                 for (const key of Object.keys(res._headers)) {
                     res.removeHeader(key);
@@ -245,7 +260,7 @@ export default class ExpressGrip {
                 res.set('Grip-Hold', res.locals.gripHold);
                 res.set('Grip-Channel', createGripChannelHeader(channels));
                 if (res.locals.gripTimeout != null) {
-                    res.set('Grip-Timeout', res.locals.gripTimeout);
+                    res.set('Grip-Timeout', String(res.locals.gripTimeout));
                 }
             }
         }
