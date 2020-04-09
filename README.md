@@ -41,14 +41,14 @@ Therefore, _even if a particular route does not use `express-grip` features, it'
 to call next() at the end of each of your route handlers to ensure that the post-route middleware
 executes_.
 
-The two middleware classes will work together to will parse the Grip-Sig header in any requests to detect if they came from a
-GRIP proxy, and it will apply any hold instructions when responding. Additionally, the
-middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP
+The two middleware classes will work together to parse the Grip-Sig header in any requests to detect
+if they came from a GRIP proxy, and it will apply any hold instructions when responding. Additionally,
+the middleware handles WebSocket-Over-HTTP processing so that WebSockets managed by the GRIP
 proxy can be controlled via HTTP responses from the Express application.
 
 ### Configuration
 
-Configure express-grip by passing options to the buildExpressGrip function.
+Configure express-grip by passing options to the `buildExpressGrip` function.
 
 ```javascript
 import buildExpressGrip from '@fanoutio/express-grip';
@@ -162,64 +162,119 @@ app.use(expressGrip.postGrip);
 
 ## Consuming this library
 
-### ESM
-
-If you are using Node 12.0 or newer or building a bundle for a browser using a
-modern bundler, you can use this package as an ESM module.  Install it as an
-npm package:
-
-```bash
-npm install @fanoutio/grip
-```
-
-Import in your JavaScript:
-
-```javascript
-import buildExpressGrip, { setHoldStream } from '@fanoutio/grip';
-const expressGrip = buildExpressGrip({ /* config */ });
-```
-
 ### CommonJS
 
-This package is a hybrid package, and a CommonJS version of the library is
-available by specifying a deep path.  You will also need to install the dependency
-`@babel/runtime-corejs3` directly:
-
-```bash
-npm install @fanoutio/grip @babel/runtime-corejs3
-```
+The CommonJS version of this package requires Node v8 or newer.
 
 Require in your JavaScript:
 
 ```javascript
-const buildExpressGrip = require('@fanoutio/grip/commonjs');
-const { setHoldStream } = buildExpressGrip;
-
+const buildExpressGrip = require('@fanoutio/express-grip');
 const expressGrip = buildExpressGrip({ /* config */ });
+```
+
+If you are building a bundle, you may also import in your JavaScript.
+
+```javascript
+import grip from '@fanoutio/express-grip';
+const expressGrip = buildExpressGrip({ /* config */ });
+```
+
+This package comes with full TypeScript type definitions, so you may use it with
+TypeScript as well.
+
+```javascript
+import buildExpressGrip, { IGripExpressResponse } from '@fanoutio/express-grip';
+const expressGrip = buildExpressGrip({ /* config */ });
+
+// IGripExpressResponse is a type declaration.
 ```
 
 ## Demos
 
 ### HTTP Demo
 
-Express 4 Grip Hold Stream example
+Express 4 Grip Hold Stream example.
 
+1. Clone this repository, then build the commonjs build of this library.
+```
+npm install
+npm run build-commonjs
+```
+
+2. You will need to obtain and install Pushpin (https://pushpin.org/). Make sure that the Pushpin `routes` file looks like this:
+```
+* localhost:3000
+```
+
+3. In a Terminal window, start Pushpin.
+```
 pushpin
-node demo/http/server.mjs test
+```
+
+4. In another Terminal window, start the demo server.
+```
+cd demo/http
+node server.js test
+```
+
+5. In another Terminal window, issue an HTTP long poll.
+```
 curl -i http://localhost:7999/
+```
+
+6. Finally, in another Terminal window, post a message.
+```
 curl -i -X POST -d 'foo' http://localhost:7999/
+```
+
+7. In the Terminal window from step 5, you will see the message appear. 
+
+The same example is also provided in Typescript. In place of step 3 above,
+use the TypeScript version:
+
+```
+cd demo/http-typescript
+ts-node server.ts test
+```
 
 ### Websocket Demo
 
-Express 4 stateless WebSocket echo service example with broadcast endpoint
+Express 4 stateless WebSocket echo service example with broadcast endpoint.
 
-wscat
+1. Clone this repository, then build the commonjs build of this library.
+```
+npm install
+npm run build-commonjs
+```
+
+2. You will need to obtain and install Pushpin (https://pushpin.org/). Make sure that the Pushpin `routes` file looks like this:
+```
+* localhost:3000,over_http
+```
+
+3. In a Terminal window, start Pushpin.
+```
 pushpin
-node demo/ws/server test
-wscat --connect ws://localhost:7999/websocket
-curl -i -X POST -d 'foo' http://localhost:7999/broadcast
+```
 
-### Migrating from 1.x 
+4. In another Terminal window, start the demo server.
+```
+cd demo/ws
+node server.js test
+```
+
+5. In another Terminal window, open a Websocket connection.
+```
+wscat --connect ws://localhost:7999/websocket
+```
+
+6. Finally, in another Terminal window, post a message.
+```
+curl -i -X POST -d 'foo' http://localhost:7999/broadcast
+```
+
+7. In the Terminal window from step 5, you will see the message appear. 
 
 ## License
 
