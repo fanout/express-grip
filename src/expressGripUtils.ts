@@ -1,5 +1,6 @@
 import IGripExpressResponse from "./IGripExpressResponse";
 import { Channels, convertChannels } from "./utils/channels";
+import { Response } from "express";
 
 export function setHoldLongpoll(response: IGripExpressResponse, channels: Channels, timeout: number) {
     response.locals.gripHold = 'response';
@@ -12,7 +13,7 @@ export function setHoldStream(response: IGripExpressResponse, channels: Channels
     response.locals.gripChannels = convertChannels(channels);
 }
 
-export function isGripProxied(response: IGripExpressResponse) {
+export function isGripProxied(response: Response): response is IGripExpressResponse {
     return response.locals.gripProxied ?? false;
 }
 
