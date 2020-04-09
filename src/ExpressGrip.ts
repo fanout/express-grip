@@ -31,6 +31,7 @@ import {
 import IExpressGripConfig from "./IExpressGripConfig";
 import IGripExpressResponse from "./IGripExpressResponse";
 import IGripExpressRequest from "./IGripExpressRequest";
+import { RequestHandler } from "express";
 
 const CONTENT_TYPE_APP_WS_EVENTS = 'application/websocket-events';
 
@@ -41,8 +42,8 @@ export default class ExpressGrip {
     isGripProxyRequired: boolean = false;
 
     _pubControl?: GripPubControl;
-    preGrip: Function;
-    postGrip: Function;
+    preGrip: RequestHandler;
+    postGrip: RequestHandler;
 
     constructor(config?: IExpressGripConfig) {
 
