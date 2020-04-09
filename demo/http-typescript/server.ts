@@ -1,6 +1,7 @@
 import express from 'express';
 import { HttpStreamFormat } from '@fanoutio/grip';
-import buildExpressGrip, { setHoldStream, } from '../../esm/main.mjs';
+import buildExpressGrip from '../..';
+const { isGripProxied, setHoldStream } = buildExpressGrip;
 
 const app = express();
 
@@ -28,11 +29,13 @@ const expressGrip = buildExpressGrip({
 // Add the pre-handler middleware to the front of the stack
 app.use(expressGrip.preGrip);
 
-app.get('/', function(req, res, next) {
+app.get('/', function(_req, res, next) {
 
     try {
         // If the request didn't come through a GRIP proxy, throw 501
-        if (!res.locals.gripProxied) {
+        // NOTE: in TypeScript, use isGripProxied() as it is a type guard
+        // that enables res to be treated as an IGripExpressResponse.
+        if (!isGripProxied(res)) {
             res.sendStatus(501);
             return;
         }

@@ -1,6 +1,6 @@
-const express = require('express');
-const { WebSocketMessageFormat } = require('@fanoutio/grip/commonjs');
-const buildExpressGrip = require('../../commonjs');
+const express = require( 'express' );
+const { WebSocketMessageFormat } = require( '@fanoutio/grip' );
+const buildExpressGrip = require( '../..' );
 const { verifyIsWebSocket, getWsContext, } = buildExpressGrip;
 
 const app = express();

@@ -1,16 +1,18 @@
 {
-  "name": "ws-demo",
+  "name": "http-demo-typescript",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "ts-node server.ts test"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@fanoutio/grip": "^2.0.0-rc.2",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "ts-node": "^8.8.2",
+    "typescript": "^3.8.3"
   }
 }
