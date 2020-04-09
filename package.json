@@ -46,7 +46,7 @@
     "express"
   ],
   "dependencies": {
-    "@fanoutio/grip": "^2.0.0-rc.2",
+    "@fanoutio/grip": "^2.0.0",
     "@fanoutio/pubcontrol": "^2.1.4",
     "express": "^4.17.1",
     "jspack": "0.0.4"

@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fanoutio/grip": "^2.0.0-rc.2",
+    "@fanoutio/grip": "^2.0.0",
     "express": "^4.17.1"
   }
 }
