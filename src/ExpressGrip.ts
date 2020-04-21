@@ -152,7 +152,7 @@ export default class ExpressGrip {
                 }, {});
 
             req._body = true;
-            let bodySegments: any[] = [];
+            const bodySegments: any[] = [];
             req.on('data', (chunk) => {
                 bodySegments.push(chunk);
             });
