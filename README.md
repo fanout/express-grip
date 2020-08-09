@@ -1,3 +1,12 @@
+NOTE: express-grip is no longer maintained.  It has been superseded completely
+by [connect-grip](https://github.com/fanout/connect-grip).
+
+`connect-grip` is a new library that is fully `connect`-compatible, and works
+with additional frameworks including [Next.js](https://nextjs.org/).
+Additionally, its improved architecture avoids the need to use a pre- and
+post-middleware, allowing routes to be written in a more standard way and other
+middleware to work more reliably.
+
 # express-grip
 
 Author: Konstantin Bokarius <kon@fanout.io>, Katsuyuki Ohmuro <harmony7@pex2.jp>
